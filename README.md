@@ -14,7 +14,7 @@ produced with old implementation: ```HttpClient```.
     3. Perform the request
     4. Retrieve an instance of HttpResponse.
     
-- Simple demo:
+- Simple demo (sync call):
 
 ```java
 public class App {
@@ -26,26 +26,46 @@ public class App {
     HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(20)).build();
 
     try {
-      // define a test endpoint
-      String urlEndpoint = "https://postman-echo.com/get";
-      URI uri = URI.create(urlEndpoint + "?foo1=bar1&foo2=bar2");
-
-      // create a request for a given URI
-      HttpRequest request = HttpRequest.newBuilder().uri(uri).build();
-
-      // send the request to the server
-      HttpResponse response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-      // process the response
-      System.out.println("[Status code]: " + response.statusCode());
-      System.out.println("[Headers]: " + response.headers().allValues("content-type"));
-      System.out.println(
-              "[Body]: " + gson.toJson(JsonParser.parseString(response.body().toString())));
-
-    } catch (InterruptedException | IOException e) {
-      e.printStackTrace();
+        // send the request to the server
+        HttpResponse response = client.send(request, HttpResponse.BodyHandlers.ofString());
+ 
+        // process the response
+        System.out.println("[Status code]: " + response.statusCode());
+        System.out.println("[Headers]: " + response.headers().allValues("content-type"));
+        System.out.println(
+           "[Body]: " + gson.toJson(JsonParser.parseString(response.body().toString())));
+ 
+        } catch (InterruptedException | IOException e) {
+            e.printStackTrace();
+        }
     }
-  }
-}
+  }          
 ```
-    
+- Simple demo (async call):
+
+```java
+public class App {
+  public static void main(String[] args) {
+    //Use GSON to prettify the body result
+    Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+    // create a new connection with a timeout of 20s
+    HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(20)).build();
+
+    try {
+        // send the request to the server
+        System.out.println("## Async call...");
+        client
+           .sendAsync(request, HttpResponse.BodyHandlers.ofString())
+           .thenApply(HttpResponse::body)
+           .thenApply(JsonParser::parseString)
+           .thenApply(gson::toJson)
+           .thenAccept(System.out::println)
+           .join();
+ 
+        } catch (InterruptedException | IOException e) {
+            e.printStackTrace();
+        }
+    }
+  }          
+```   
